@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/event"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kms"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store/memstore"
+	"github.com/ai-crypto-onramp/audit-logger/internal/event"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kms"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store/memstore"
 )
 
 func mustTime(t *testing.T, s string) time.Time {

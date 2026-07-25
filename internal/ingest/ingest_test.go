@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/event"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/redaction"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/s3"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store/memstore"
+	"github.com/ai-crypto-onramp/audit-logger/internal/event"
+	"github.com/ai-crypto-onramp/audit-logger/internal/redaction"
+	"github.com/ai-crypto-onramp/audit-logger/internal/s3"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store/memstore"
 )
 
 func envelopeJSON(id, ts string, payload map[string]any, payloadHash string) []byte {

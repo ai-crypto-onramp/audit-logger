@@ -14,11 +14,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/app"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/cli"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/config"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/otel"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store/postgres"
+	"github.com/ai-crypto-onramp/audit-logger/internal/app"
+	"github.com/ai-crypto-onramp/audit-logger/internal/cli"
+	"github.com/ai-crypto-onramp/audit-logger/internal/config"
+	"github.com/ai-crypto-onramp/audit-logger/internal/otel"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store/postgres"
 )
 
 func main() {

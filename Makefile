@@ -19,10 +19,10 @@ verify-chain:
 	go run ./cmd/audit-event-log verify-chain --db $$DB_URL
 
 docker-build:
-	docker build -t ai-crypto-onramp/audit-event-log .
+	docker build -t ai-crypto-onramp/audit-logger .
 
 docker-run:
-	docker run --rm -p 8080:8080 ai-crypto-onramp/audit-event-log
+	docker run --rm -p 8080:8080 ai-crypto-onramp/audit-logger
 
 clean:
 	rm -rf bin/ coverage.out

@@ -15,7 +15,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
 )
 
 // All bundles the in-memory stores.

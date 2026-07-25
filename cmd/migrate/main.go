@@ -18,7 +18,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store/migrations"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store/migrations"
 )
 
 func main() {

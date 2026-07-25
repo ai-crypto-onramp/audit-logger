@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kms"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store/memstore"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kms"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store/memstore"
 )
 
 // buildChain inserts n events into the in-memory store and returns them.

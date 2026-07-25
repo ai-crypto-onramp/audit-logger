@@ -1,4 +1,4 @@
-module github.com/ai-crypto-onramp/audit-event-log
+module github.com/ai-crypto-onramp/audit-logger
 
 go 1.25.0
 

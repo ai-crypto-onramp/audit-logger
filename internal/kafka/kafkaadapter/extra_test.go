@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kafka"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kafka"
 )
 
 func TestNewBrokersEmpty(t *testing.T) {

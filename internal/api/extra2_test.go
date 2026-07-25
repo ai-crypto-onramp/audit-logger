@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/auth"
+	"github.com/ai-crypto-onramp/audit-logger/internal/auth"
 )
 
 func TestGetEventNotFoundByUUID(t *testing.T) {

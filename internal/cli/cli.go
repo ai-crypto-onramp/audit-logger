@@ -14,8 +14,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/chain"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/chain"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
 )
 
 // VerifyChainFlags parses the CLI flags for `verify-chain`.

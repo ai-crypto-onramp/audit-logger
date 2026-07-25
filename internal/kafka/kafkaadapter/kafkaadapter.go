@@ -11,7 +11,7 @@ import (
 
 	"github.com/segmentio/kafka-go"
 
-	kafkac "github.com/ai-crypto-onramp/audit-event-log/internal/kafka"
+	kafkac "github.com/ai-crypto-onramp/audit-logger/internal/kafka"
 )
 
 // Consumer wraps a kafka-go Reader and implements kafkac.ConsumerGroup.

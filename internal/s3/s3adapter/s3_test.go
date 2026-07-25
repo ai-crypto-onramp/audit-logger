@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 
-	s3store "github.com/ai-crypto-onramp/audit-event-log/internal/s3"
+	s3store "github.com/ai-crypto-onramp/audit-logger/internal/s3"
 )
 
 // fakeS3Server is a minimal S3-like HTTP server for unit-testing the

@@ -19,8 +19,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/event"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/event"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
 )
 
 // ZeroHash is the genesis prev_hash sentinel (32 zero bytes).

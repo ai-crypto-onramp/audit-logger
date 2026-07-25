@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/config"
+	"github.com/ai-crypto-onramp/audit-logger/internal/config"
 )
 
 func TestNewS3ClientWithRegion(t *testing.T) {

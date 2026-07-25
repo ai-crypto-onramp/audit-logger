@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/config"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kafka"
+	"github.com/ai-crypto-onramp/audit-logger/internal/config"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kafka"
 )
 
 // errConsumer is a kafka.ConsumerGroup whose Run always returns a non-ctx error.

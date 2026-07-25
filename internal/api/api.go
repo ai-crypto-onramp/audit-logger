@@ -32,11 +32,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/auth"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/chain"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/event"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/metrics"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/auth"
+	"github.com/ai-crypto-onramp/audit-logger/internal/chain"
+	"github.com/ai-crypto-onramp/audit-logger/internal/event"
+	"github.com/ai-crypto-onramp/audit-logger/internal/metrics"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
 )
 
 // Presigner issues time-limited S3 download URLs.

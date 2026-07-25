@@ -6,10 +6,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/event"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/s3"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store/memstore"
+	"github.com/ai-crypto-onramp/audit-logger/internal/event"
+	"github.com/ai-crypto-onramp/audit-logger/internal/s3"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store/memstore"
 )
 
 // errRedactor is a Redactor that always returns an error.

@@ -1,7 +1,7 @@
 # Audit / Event Log
 
-![CI](https://github.com/ai-crypto-onramp/audit-event-log/actions/workflows/ci.yml/badge.svg)
-[![codecov](https://codecov.io/gh/ai-crypto-onramp/audit-event-log/branch/main/graph/badge.svg)](https://codecov.io/gh/ai-crypto-onramp/audit-event-log)
+![CI](https://github.com/ai-crypto-onramp/audit-logger/actions/workflows/ci.yml/badge.svg)
+[![codecov](https://codecov.io/gh/ai-crypto-onramp/audit-logger/branch/main/graph/badge.svg)](https://codecov.io/gh/ai-crypto-onramp/audit-logger)
 
 Append-only audit trail for compliance and incident forensics; consumes the event bus.
 

@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/auth"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/config"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/event"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kafka"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/auth"
+	"github.com/ai-crypto-onramp/audit-logger/internal/config"
+	"github.com/ai-crypto-onramp/audit-logger/internal/event"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kafka"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
 )
 
 // WithDefaults returns cfg with safe test defaults applied.

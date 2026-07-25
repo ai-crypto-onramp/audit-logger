@@ -12,16 +12,16 @@ import (
 	awskms "github.com/aws/aws-sdk-go-v2/service/kms"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/config"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kafka"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kafka/kafkaadapter"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kms"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kms/kmsadapter"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/s3"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/s3/s3adapter"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store/memstore"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store/postgres"
+	"github.com/ai-crypto-onramp/audit-logger/internal/config"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kafka"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kafka/kafkaadapter"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kms"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kms/kmsadapter"
+	"github.com/ai-crypto-onramp/audit-logger/internal/s3"
+	"github.com/ai-crypto-onramp/audit-logger/internal/s3/s3adapter"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store/memstore"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store/postgres"
 )
 
 // openPostgresOrFallback opens a Postgres-backed store.All bundle. On error

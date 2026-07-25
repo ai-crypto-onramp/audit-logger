@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/chain"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/config"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kafka"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/chain"
+	"github.com/ai-crypto-onramp/audit-logger/internal/config"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kafka"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
 )
 
 func TestServerAnchorGetter(t *testing.T) {

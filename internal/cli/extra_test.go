@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
 )
 
 func TestListOnlyStoreInsertError(t *testing.T) {

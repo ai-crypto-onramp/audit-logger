@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/auth"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/chain"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store/memstore"
+	"github.com/ai-crypto-onramp/audit-logger/internal/auth"
+	"github.com/ai-crypto-onramp/audit-logger/internal/chain"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store/memstore"
 )
 
 func TestListEventsBadTo(t *testing.T) {

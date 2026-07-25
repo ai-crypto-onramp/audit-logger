@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/auth"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/chain"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/config"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/event"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kms"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/s3"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/auth"
+	"github.com/ai-crypto-onramp/audit-logger/internal/chain"
+	"github.com/ai-crypto-onramp/audit-logger/internal/config"
+	"github.com/ai-crypto-onramp/audit-logger/internal/event"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kms"
+	"github.com/ai-crypto-onramp/audit-logger/internal/s3"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
 )
 
 func TestExportPutAdapterPut(t *testing.T) {

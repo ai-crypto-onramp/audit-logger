@@ -15,7 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 
-	s3store "github.com/ai-crypto-onramp/audit-event-log/internal/s3"
+	s3store "github.com/ai-crypto-onramp/audit-logger/internal/s3"
 )
 
 // Client wraps an aws-sdk-go-v2 S3 client and implements s3store.Client.

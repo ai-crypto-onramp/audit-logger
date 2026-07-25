@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/config"
+	"github.com/ai-crypto-onramp/audit-logger/internal/config"
 )
 
 // withAWSProfileNonexistent sets AWS env so that

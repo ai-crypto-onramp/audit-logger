@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	kmstypes "github.com/aws/aws-sdk-go-v2/service/kms/types"
 
-	kmssigner "github.com/ai-crypto-onramp/audit-event-log/internal/kms"
+	kmssigner "github.com/ai-crypto-onramp/audit-logger/internal/kms"
 )
 
 // Client wraps an aws-sdk-go-v2 KMS client and implements kms.Signer.

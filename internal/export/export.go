@@ -14,10 +14,10 @@ import (
 	"io"
 	"time"
 
-	"github.com/ai-crypto-onramp/audit-event-log/internal/chain"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/kms"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/s3"
-	"github.com/ai-crypto-onramp/audit-event-log/internal/store"
+	"github.com/ai-crypto-onramp/audit-logger/internal/chain"
+	"github.com/ai-crypto-onramp/audit-logger/internal/kms"
+	"github.com/ai-crypto-onramp/audit-logger/internal/s3"
+	"github.com/ai-crypto-onramp/audit-logger/internal/store"
 )
 
 // PayloadStore is the object-storage surface used by the export pipeline.

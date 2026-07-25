@@ -7,12 +7,12 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=linux go build -o /audit-event-log ./cmd/audit-event-log
+    CGO_ENABLED=0 GOOS=linux go build -o /audit-logger ./cmd/audit-logger
 
 FROM alpine:3.20
 RUN apk add --no-cache wget
-COPY --from=builder /audit-event-log /audit-event-log
+COPY --from=builder /audit-logger /audit-logger
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget -qO- http://localhost:8080/healthz || exit 1
-ENTRYPOINT ["/audit-event-log"]
+ENTRYPOINT ["/audit-logger"]
