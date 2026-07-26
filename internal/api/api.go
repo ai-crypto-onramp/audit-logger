@@ -100,7 +100,8 @@ func NewRouter(d *Deps) http.Handler {
 			writeError(w, http.StatusNotImplemented, "legal hold not configured")
 		})))
 	}
-	return mux
+	secret, bypass := auth.SecretFromEnv()
+	return auth.Middleware(secret, bypass)(mux)
 }
 
 func healthz(w http.ResponseWriter, _ *http.Request) {

@@ -13,7 +13,7 @@ func TestRequireReader(t *testing.T) {
 
 	// Reader allowed.
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(RolesHeader, "audit-reader")
+	req = WithRolesContext(req, RoleSet{RoleReader: true})
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -22,7 +22,7 @@ func TestRequireReader(t *testing.T) {
 
 	// Admin implies reader.
 	req = httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(RolesHeader, "audit-admin")
+	req = WithRolesContext(req, RoleSet{RoleAdmin: true})
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -39,7 +39,7 @@ func TestRequireReader(t *testing.T) {
 
 	// Wrong role forbidden.
 	req = httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(RolesHeader, "other")
+	req = WithRolesContext(req, RoleSet{Role("other"): true})
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
@@ -53,7 +53,7 @@ func TestRequireAdmin(t *testing.T) {
 	}))
 	// Reader cannot access admin.
 	req := httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set(RolesHeader, "audit-reader")
+	req = WithRolesContext(req, RoleSet{RoleReader: true})
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
@@ -61,7 +61,7 @@ func TestRequireAdmin(t *testing.T) {
 	}
 	// Admin allowed.
 	req = httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set(RolesHeader, "audit-admin,audit-reader")
+	req = WithRolesContext(req, RoleSet{RoleAdmin: true, RoleReader: true})
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -69,11 +69,17 @@ func TestRequireAdmin(t *testing.T) {
 	}
 }
 
-func TestRoles(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(RolesHeader, "a, b ,,c")
-	s := Roles(req)
-	if !s.Has("a") || !s.Has("b") || !s.Has("c") {
-		t.Errorf("roles: %+v", s)
+func TestIssueAndVerify(t *testing.T) {
+	const secret = "s3cret"
+	tok, err := Issue("audit-admin", secret)
+	if err != nil {
+		t.Fatalf("Issue: %v", err)
+	}
+	claims, err := verify(tok, secret)
+	if err != nil {
+		t.Fatalf("verify: %v", err)
+	}
+	if claims.Sub != "audit-admin" {
+		t.Errorf("sub: %s", claims.Sub)
 	}
 }

@@ -80,7 +80,15 @@ func do(t *testing.T, h http.Handler, method, path string, body []byte, role aut
 	t.Helper()
 	req := httptest.NewRequest(method, path, bytes.NewReader(body))
 	if role != "" {
-		req.Header.Set(auth.RolesHeader, string(role))
+		sub := "audit-reader-svc"
+		if role == auth.RoleAdmin {
+			sub = "audit-admin"
+		}
+		tok, err := auth.Issue(sub, testSecret)
+		if err != nil {
+			t.Fatalf("auth.Issue: %v", err)
+		}
+		req.Header.Set("Authorization", "Bearer "+tok)
 	}
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -115,8 +123,8 @@ func TestListEvents(t *testing.T) {
 func TestListEventsForbidsNoRole(t *testing.T) {
 	h, _, _ := newRouter(t)
 	rec := do(t, h, "GET", "/v1/events", nil, "")
-	if rec.Code != http.StatusForbidden {
-		t.Fatalf("expected 403, got %d", rec.Code)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", rec.Code)
 	}
 }
 

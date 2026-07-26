@@ -604,8 +604,8 @@ func TestGetExportWithCompletedAt(t *testing.T) {
 func TestCreateExportRequiresRole(t *testing.T) {
 	h, _, _ := newRouter(t)
 	rec := do(t, h, "POST", "/v1/exports", []byte(`{}`), "")
-	if rec.Code != http.StatusForbidden {
-		t.Fatalf("expected 403, got %d", rec.Code)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", rec.Code)
 	}
 }
 
