@@ -7,6 +7,8 @@ package app
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +16,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -51,10 +54,16 @@ type Server struct {
 // Build constructs the server from config. When DB_URL is empty it uses
 // in-memory stores; when set it opens Postgres and runs migrations. The
 // Kafka consumer, S3 payload store, and KMS signer default to in-memory
-// fakes when their respective env vars are unset.
+// fakes only when DEV_MODE=1 (or running under a test binary); in
+// production missing creds are fatal.
 func Build(cfg config.Config) (*Server, error) {
 	// Register Prometheus collectors (idempotent).
 	metrics.Register(nil)
+
+	devMode := os.Getenv("DEV_MODE") == "1" || testing.Testing()
+	if devMode {
+		log.Printf("DEV_MODE=1: stub/fake clients in use — NOT FOR PRODUCTION")
+	}
 
 	// Stores: Postgres if DB_URL, else in-memory.
 	var all store.All
@@ -68,24 +77,18 @@ func Build(cfg config.Config) (*Server, error) {
 		all = store.All{Events: mem.Events, Anchors: mem.Anchors, Exports: mem.Exports, DeadLetters: mem.DeadLetters}
 	}
 
-	// S3 payload store: real adapter if PAYLOAD_BUCKET+AWS configured, else fake.
-	var payloadStore s3.Client = s3.NewFake()
-	if cfg.PayloadBucket != "" && os.Getenv("AWS_REGION") != "" {
-		if ps, err := newS3Client(cfg); err == nil {
-			payloadStore = ps
-		} else {
-			log.Printf("app: s3 client init failed, using fake: %v", err)
-		}
+	// S3 payload store: real adapter if PAYLOAD_BUCKET+AWS configured; in
+	// DEV_MODE fall back to fake with a warning, otherwise fatal.
+	payloadStore, err := buildS3(cfg, devMode)
+	if err != nil {
+		return nil, err
 	}
 
-	// KMS signer: real adapter if KMS_KEY_ID+AWS configured, else fake.
-	var signer kms.Signer = kms.NewFake(cfg.KMSKeyID)
-	if cfg.KMSKeyID != "" && os.Getenv("AWS_REGION") != "" {
-		if s, err := newKMSClient(cfg.KMSKeyID); err == nil {
-			signer = s
-		} else {
-			log.Printf("app: kms client init failed, using fake: %v", err)
-		}
+	// KMS signer: real adapter if KMS_KEY_ID+AWS configured; in DEV_MODE
+	// fall back to fake with a warning, otherwise fatal.
+	signer, err := buildKMS(cfg, devMode)
+	if err != nil {
+		return nil, err
 	}
 
 	// Redaction policy.
@@ -126,14 +129,11 @@ func Build(cfg config.Config) (*Server, error) {
 		DefaultRetentionDays: cfg.RetentionDays,
 	})
 
-	// Kafka consumer: real adapter if KAFKA_BROKERS set, else fake.
-	var consumer kafka.ConsumerGroup = kafka.NewFake(256)
-	if len(cfg.KafkaBrokers) > 0 {
-		if c, err := newKafkaConsumer(cfg); err == nil {
-			consumer = c
-		} else {
-			log.Printf("app: kafka consumer init failed, using fake: %v", err)
-		}
+	// Kafka consumer: real adapter if KAFKA_BROKERS set; in DEV_MODE fall
+	// back to fake with a warning, otherwise fatal.
+	consumer, err := buildKafka(cfg, devMode)
+	if err != nil {
+		return nil, err
 	}
 
 	// Verifier backed by chain.Sweep.
@@ -292,3 +292,69 @@ func (a *exportPutAdapter) Put(ctx context.Context, bucket string, opts s3.PutOp
 
 // _ guard
 var _ = promhttp.Handler
+
+// buildS3 wires the S3 payload store. When PAYLOAD_BUCKET and AWS_REGION
+// are set it constructs the real adapter. In DEV_MODE any missing cred or
+// init error falls back to the fake with a warning; in prod it is fatal.
+func buildS3(cfg config.Config, devMode bool) (s3.Client, error) {
+	if cfg.PayloadBucket != "" && os.Getenv("AWS_REGION") != "" {
+		ps, err := newS3Client(cfg)
+		if err != nil {
+			if devMode {
+				log.Printf("app: s3 client init failed, using fake (DEV_MODE): %v", err)
+				return s3.NewFake(), nil
+			}
+			return nil, fmt.Errorf("S3 client init failed and DEV_MODE!=1; refusing to start in production mode: %w", err)
+		}
+		return ps, nil
+	}
+	if devMode {
+		log.Printf("app: PAYLOAD_BUCKET or AWS_REGION unset and DEV_MODE=1; using fake S3 payload store (NOT FOR PRODUCTION)")
+		return s3.NewFake(), nil
+	}
+	return nil, errors.New("PAYLOAD_BUCKET/AWS_REGION unset and DEV_MODE!=1; refusing to start in production mode")
+}
+
+// buildKMS wires the KMS signer. When KMS_KEY_ID and AWS_REGION are set it
+// constructs the real adapter. In DEV_MODE any missing cred or init error
+// falls back to the fake with a warning; in prod it is fatal.
+func buildKMS(cfg config.Config, devMode bool) (kms.Signer, error) {
+	if cfg.KMSKeyID != "" && os.Getenv("AWS_REGION") != "" {
+		s, err := newKMSClient(cfg.KMSKeyID)
+		if err != nil {
+			if devMode {
+				log.Printf("app: kms client init failed, using fake (DEV_MODE): %v", err)
+				return kms.NewFake(cfg.KMSKeyID), nil
+			}
+			return nil, fmt.Errorf("KMS client init failed and DEV_MODE!=1; refusing to start in production mode: %w", err)
+		}
+		return s, nil
+	}
+	if devMode {
+		log.Printf("app: KMS_KEY_ID or AWS_REGION unset and DEV_MODE=1; using fake KMS signer (NOT FOR PRODUCTION)")
+		return kms.NewFake(cfg.KMSKeyID), nil
+	}
+	return nil, errors.New("KMS_KEY_ID/AWS_REGION unset and DEV_MODE!=1; refusing to start in production mode")
+}
+
+// buildKafka wires the Kafka consumer group. When KAFKA_BROKERS is set it
+// constructs the real adapter. In DEV_MODE any missing cred or init error
+// falls back to the fake with a warning; in prod it is fatal.
+func buildKafka(cfg config.Config, devMode bool) (kafka.ConsumerGroup, error) {
+	if len(cfg.KafkaBrokers) > 0 {
+		c, err := newKafkaConsumer(cfg)
+		if err != nil {
+			if devMode {
+				log.Printf("app: kafka consumer init failed, using fake (DEV_MODE): %v", err)
+				return kafka.NewFake(256), nil
+			}
+			return nil, fmt.Errorf("kafka consumer init failed and DEV_MODE!=1; refusing to start in production mode: %w", err)
+		}
+		return c, nil
+	}
+	if devMode {
+		log.Printf("app: KAFKA_BROKERS unset and DEV_MODE=1; using fake kafka consumer (NOT FOR PRODUCTION)")
+		return kafka.NewFake(256), nil
+	}
+	return nil, errors.New("KAFKA_BROKERS unset and DEV_MODE!=1; refusing to start in production mode")
+}

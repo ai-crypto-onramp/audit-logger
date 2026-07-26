@@ -1,7 +1,7 @@
 // Package app — adapter factories. These functions construct real Postgres
 // / S3 / KMS / Kafka adapters from config; they are only invoked when the
-// relevant env vars are set. On any init error they fall back to in-memory
-// fakes so the binary still boots (mirroring the sibling services).
+// relevant env vars are set. On init error the caller (app.Build) decides
+// whether to fall back to in-memory fakes (DEV_MODE=1) or fail in prod.
 package app
 
 import (
