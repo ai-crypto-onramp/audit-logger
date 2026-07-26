@@ -29,6 +29,14 @@ type DB struct {
 	deadLetters *DeadLetterStore
 }
 
+// auditEventsChainAdvisoryLockKey is the int64 key passed to
+// pg_advisory_xact_lock when extending the audit_events hash chain. The
+// transaction-scoped lock is held for the duration of InsertChained so
+// concurrent ingests serialize on the chain tip and cannot fork it. The
+// lock auto-releases on COMMIT/ROLLBACK. The value is a stable constant
+// (not derived from runtime state) so all replicas agree on it.
+const auditEventsChainAdvisoryLockKey int64 = 0x6175646974 // "audit"
+
 // Open connects to dsn, pings, runs migrations, and returns a wired DB.
 func Open(ctx context.Context, dsn string) (*DB, error) {
 	pool, err := pgxpool.New(ctx, dsn)
@@ -111,6 +119,67 @@ func (s *EventStore) Insert(ctx context.Context, e *store.Event) (bool, error) {
 		e.PayloadHash, e.PayloadRef, e.PrevHash, e.ThisHash, e.Anchored, e.LegalHold, e.Redacted)
 	if err != nil {
 		return false, err
+	}
+	return ct.RowsAffected() > 0, nil
+}
+
+// InsertChained atomically extends the audit_events hash chain. It:
+//  1. Begins a transaction and sets SERIALIZABLE isolation.
+//  2. Acquires a transaction-scoped advisory lock keyed on
+//     auditEventsChainAdvisoryLockKey so concurrent ingests serialize on
+//     the chain tip.
+//  3. Reads the current chain head's this_hash (the prev_hash for the new
+//     event).
+//  4. Computes this_hash via hashFn(prevHash) (the canonical chain hash,
+//     supplied by the caller to avoid importing internal/chain here).
+//  5. Inserts the event (idempotent on id via ON CONFLICT DO NOTHING).
+//
+// e.PrevHash and e.ThisHash are overwritten from the locked read; callers
+// must not rely on any pre-set values. Returns (true, nil) for a fresh
+// insert, (false, nil) for an idempotent re-delivery.
+func (s *EventStore) InsertChained(ctx context.Context, e *store.Event, hashFn func(prevHash []byte) []byte) (bool, error) {
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return false, fmt.Errorf("postgres: insert chained: begin: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	if _, err := tx.Exec(ctx, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"); err != nil {
+		return false, fmt.Errorf("postgres: insert chained: set serializable: %w", err)
+	}
+	if _, err := tx.Exec(ctx, "SELECT pg_advisory_xact_lock($1)", auditEventsChainAdvisoryLockKey); err != nil {
+		return false, fmt.Errorf("postgres: insert chained: advisory lock: %w", err)
+	}
+
+	// Read the current chain tip's this_hash inside the locked tx.
+	var prevHash []byte
+	err = tx.QueryRow(ctx, `
+		SELECT this_hash FROM audit_events
+		ORDER BY ts DESC, id DESC LIMIT 1`).Scan(&prevHash)
+	if err != nil {
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return false, fmt.Errorf("postgres: insert chained: chain head: %w", err)
+		}
+		// Empty chain -> genesis prev_hash is the 32 zero bytes.
+		prevHash = make([]byte, 32)
+	}
+
+	e.PrevHash = append([]byte(nil), prevHash...)
+	e.ThisHash = append([]byte(nil), hashFn(prevHash)...)
+
+	ct, err := tx.Exec(ctx, `
+		INSERT INTO audit_events
+		(id, ts, source_service, actor_id, action, target_type, target_id,
+		 payload_hash, payload_ref, prev_hash, this_hash, anchored, legal_hold, redacted)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+		ON CONFLICT (id) DO NOTHING`,
+		e.ID, e.TS, e.SourceService, e.ActorID, e.Action, e.TargetType, e.TargetID,
+		e.PayloadHash, e.PayloadRef, e.PrevHash, e.ThisHash, e.Anchored, e.LegalHold, e.Redacted)
+	if err != nil {
+		return false, fmt.Errorf("postgres: insert chained: insert: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return false, fmt.Errorf("postgres: insert chained: commit: %w", err)
 	}
 	return ct.RowsAffected() > 0, nil
 }

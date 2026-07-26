@@ -94,6 +94,9 @@ type listOnlyStore struct {
 func (s *listOnlyStore) Insert(context.Context, *store.Event) (bool, error) {
 	return false, errors.New("cli: list-only store")
 }
+func (s *listOnlyStore) InsertChained(context.Context, *store.Event, func(prevHash []byte) []byte) (bool, error) {
+	return false, errors.New("cli: list-only store")
+}
 func (s *listOnlyStore) Get(ctx context.Context, id string) (*store.Event, error) {
 	return s.op.Get(ctx, id)
 }

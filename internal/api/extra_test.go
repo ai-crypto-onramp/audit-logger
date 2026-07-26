@@ -64,6 +64,10 @@ type errListStore struct{}
 
 func (errListStore) Insert(context.Context, *store.Event) (bool, error) { return false, nil }
 
+func (errListStore) InsertChained(context.Context, *store.Event, func(prevHash []byte) []byte) (bool, error) {
+	return false, nil
+}
+
 func (errListStore) Get(context.Context, string) (*store.Event, error) {
 	return nil, &store.ErrNotFound{}
 }
@@ -159,6 +163,10 @@ type errGetStore struct{}
 
 func (errGetStore) Insert(context.Context, *store.Event) (bool, error) { return false, nil }
 
+func (errGetStore) InsertChained(context.Context, *store.Event, func(prevHash []byte) []byte) (bool, error) {
+	return false, nil
+}
+
 func (errGetStore) Get(context.Context, string) (*store.Event, error) {
 	return nil, errors.New("get boom")
 }
@@ -211,6 +219,10 @@ type listErrThenGetStore struct {
 
 func (s *listErrThenGetStore) Insert(ctx context.Context, e *store.Event) (bool, error) {
 	return s.events.Insert(ctx, e)
+}
+
+func (s *listErrThenGetStore) InsertChained(ctx context.Context, e *store.Event, hashFn func(prevHash []byte) []byte) (bool, error) {
+	return s.events.InsertChained(ctx, e, hashFn)
 }
 
 func (s *listErrThenGetStore) Get(ctx context.Context, id string) (*store.Event, error) {

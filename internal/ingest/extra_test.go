@@ -39,20 +39,22 @@ func TestIngestRedactionError(t *testing.T) {
 	}
 }
 
-// errChainHeadStore is an EventStore whose ChainHead always errors.
-type errChainHeadStore struct {
+// errInsertChainedStore is an EventStore whose InsertChained always
+// errors. This simulates a failure of the atomic chain-extension path
+// (the tx begin, advisory lock, chain-head read, or insert).
+type errInsertChainedStore struct {
 	*memstore.EventStore
 }
 
-func (s *errChainHeadStore) ChainHead(context.Context) (*store.Event, error) {
-	return nil, errors.New("chain head boom")
+func (s *errInsertChainedStore) InsertChained(context.Context, *store.Event, func(prevHash []byte) []byte) (bool, error) {
+	return false, errors.New("insert chained boom")
 }
 
-func TestIngestChainHeadError(t *testing.T) {
+func TestIngestInsertChainedError(t *testing.T) {
 	ctx := context.Background()
 	all := memstore.NewAll()
 	fake := s3.NewFake()
-	es := &errChainHeadStore{EventStore: all.Events}
+	es := &errInsertChainedStore{EventStore: all.Events}
 	p := New(Deps{
 		Events:        es,
 		Payloads:      &PutAdapter{Client: fake},
@@ -61,36 +63,7 @@ func TestIngestChainHeadError(t *testing.T) {
 	body := envelopeJSON("e1", "2026-07-13T10:00:00Z", map[string]any{"a": 1}, "")
 	res := p.Ingest(ctx, body)
 	if res.Inserted {
-		t.Fatal("should not be inserted on chain head error")
-	}
-	if res.Reason == "" {
-		t.Fatal("expected reason")
-	}
-}
-
-// errInsertStore is an EventStore whose Insert always errors.
-type errInsertStore struct {
-	*memstore.EventStore
-}
-
-func (s *errInsertStore) Insert(context.Context, *store.Event) (bool, error) {
-	return false, errors.New("insert boom")
-}
-
-func TestIngestInsertError(t *testing.T) {
-	ctx := context.Background()
-	all := memstore.NewAll()
-	fake := s3.NewFake()
-	es := &errInsertStore{EventStore: all.Events}
-	p := New(Deps{
-		Events:        es,
-		Payloads:      &PutAdapter{Client: fake},
-		PayloadBucket: "audit-bucket",
-	})
-	body := envelopeJSON("e1", "2026-07-13T10:00:00Z", map[string]any{"a": 1}, "")
-	res := p.Ingest(ctx, body)
-	if res.Inserted {
-		t.Fatal("should not be inserted on insert error")
+		t.Fatal("should not be inserted on chain-extension error")
 	}
 	if res.Reason == "" {
 		t.Fatal("expected reason")

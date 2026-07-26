@@ -201,6 +201,9 @@ func TestRunJobFailedMarksJob(t *testing.T) {
 type errStore struct{}
 
 func (errStore) Insert(context.Context, *store.Event) (bool, error) { return false, nil }
+func (errStore) InsertChained(context.Context, *store.Event, func(prevHash []byte) []byte) (bool, error) {
+	return false, nil
+}
 func (errStore) Get(context.Context, string) (*store.Event, error) { return nil, &store.ErrNotFound{} }
 func (errStore) List(context.Context, store.Filter) (*store.ListResult, error) {
 	return nil, errBoom

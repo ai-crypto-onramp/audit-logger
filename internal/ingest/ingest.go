@@ -148,20 +148,14 @@ func (p *Pipeline) IngestMessage(ctx context.Context, msg IngestMessage_) Result
 		return Result{Reason: "payload_hash format: " + err.Error(), EventID: ev.ID}
 	}
 
-	// Extend the chain: prev_hash = chain head's this_hash (or ZeroHash).
-	head, err := p.deps.Events.ChainHead(ctx)
-	if err != nil {
-		metrics.IngestRejections.WithLabelValues(ev.SourceService, "chain_head").Inc()
-		return Result{Reason: "chain head: " + err.Error(), EventID: ev.ID}
-	}
-	var prevHash []byte
-	if head != nil && len(head.ThisHash) == 32 {
-		prevHash = append([]byte(nil), head.ThisHash...)
-	} else {
-		prevHash = append([]byte(nil), chain.ZeroHash...)
-	}
-
-	thisHash := chain.CanonicalHash(ev.ID, ev.TS, ev.SourceService, ev.ActorID, ev.Action, ev.TargetType, ev.TargetID, payloadHash, prevHash)
+	// Extend the chain atomically: read the chain tip (prev_hash) and
+	// insert the new event inside a single transaction under SERIALIZABLE
+	// isolation + an advisory lock, so concurrent ingests cannot fork the
+	// chain. The chain head read is no longer performed out-of-band here;
+	// the store's InsertChained does it inside the locked transaction.
+	// The this_hash is computed by the canonical chain hash function
+	// (chain.CanonicalHash bound to this event) invoked with the prev_hash
+	// read inside the tx.
 
 	// Write payload to S3 BEFORE committing the index row.
 	payloadRef := ""
@@ -191,13 +185,16 @@ func (p *Pipeline) IngestMessage(ctx context.Context, msg IngestMessage_) Result
 		TargetID:      ev.TargetID,
 		PayloadHash:   payloadHash,
 		PayloadRef:    payloadRef,
-		PrevHash:      prevHash,
-		ThisHash:      thisHash,
 		Anchored:      false,
 		LegalHold:     p.deps.LegalHoldDefault,
 		Redacted:      redacted,
 	}
-	inserted, err := p.deps.Events.Insert(ctx, row)
+	// hashFn computes this_hash from the prev_hash read inside the locked
+	// transaction. Bound to the event's immutable fields + payload_hash.
+	hashFn := func(prevHash []byte) []byte {
+		return chain.CanonicalHash(ev.ID, ev.TS, ev.SourceService, ev.ActorID, ev.Action, ev.TargetType, ev.TargetID, payloadHash, prevHash)
+	}
+	inserted, err := p.deps.Events.InsertChained(ctx, row, hashFn)
 	if err != nil {
 		metrics.IngestRejections.WithLabelValues(ev.SourceService, "insert").Inc()
 		return Result{Reason: "insert: " + err.Error(), EventID: ev.ID}

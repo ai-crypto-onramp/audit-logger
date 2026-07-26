@@ -110,7 +110,23 @@ type EventStore interface {
 	// Insert persists an event. It is idempotent on event id: re-inserting
 	// the same id is a no-op. Returns (inserted=true, nil) for a fresh
 	// insert, (false, nil) for a re-delivery.
+	//
+	// NOTE: Insert does NOT extend the hash chain atomically. Callers that
+	// need to append a new link to the chain must use InsertChained, which
+	// reads the chain tip (prev_hash) inside the insert transaction under
+	// SERIALIZABLE isolation + an advisory lock so concurrent ingests
+	// cannot fork the chain.
 	Insert(ctx context.Context, e *Event) (bool, error)
+	// InsertChained atomically reads the current chain head's this_hash,
+	// computes the new event's prev_hash from it, computes this_hash via
+	// hashFn(prev_hash), and inserts the event under SERIALIZABLE isolation
+	// + a transaction-scoped advisory lock. The supplied hashFn MUST be the
+	// canonical chain hash function (chain.EventHash bound to e). It is
+	// invoked with the prev_hash read inside the locked transaction. The
+	// caller must NOT pre-set e.PrevHash or e.ThisHash before calling;
+	// InsertChained sets both. Returns (inserted=true, nil) for a fresh
+	// insert, (false, nil) for an idempotent re-delivery (same event id).
+	InsertChained(ctx context.Context, e *Event, hashFn func(prevHash []byte) []byte) (bool, error)
 	// Get returns a single event by id.
 	Get(ctx context.Context, id string) (*Event, error)
 	// List returns events matching the filter, ordered by (ts ASC, id ASC).
@@ -118,6 +134,10 @@ type EventStore interface {
 	// ChainHead returns the current tail of the chain (the event with the
 	// maximum (ts, id)) and its this_hash, used to set prev_hash for the
 	// next insert. Returns (nil, ZeroHash) if the chain is empty.
+	//
+	// NOTE: ChainHead is safe for read-only consumers (verify, anchor),
+	// but MUST NOT be used to extend the chain outside a transaction. Use
+	// InsertChained for that.
 	ChainHead(ctx context.Context) (*Event, error)
 	// SetLegalHold toggles the legal_hold flag for an event.
 	SetLegalHold(ctx context.Context, id string, hold bool) error

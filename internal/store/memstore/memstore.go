@@ -50,12 +50,50 @@ type EventStore struct {
 func NewEventStore() *EventStore { return &EventStore{events: map[string]*store.Event{}} }
 
 // Insert persists an event idempotently. Returns true for a fresh insert.
+//
+// NOTE: Insert does not extend the hash chain atomically. Callers that
+// need to append a new link must use InsertChained, which (under the
+// store mutex, which serializes all access) reads the chain tip, computes
+// the new prev_hash/this_hash, and inserts in one critical section.
 func (s *EventStore) Insert(_ context.Context, e *store.Event) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.events[e.ID]; ok {
 		return false, nil
 	}
+	c := *e
+	s.events[e.ID] = &c
+	s.ordered = append(s.ordered, &c)
+	sort.SliceStable(s.ordered, func(i, j int) bool {
+		a, b := s.ordered[i], s.ordered[j]
+		if !a.TS.Equal(b.TS) {
+			return a.TS.Before(b.TS)
+		}
+		return a.ID < b.ID
+	})
+	return true, nil
+}
+
+// InsertChained atomically extends the hash chain under the store mutex
+// (which serializes all access, equivalent to an advisory lock). It
+// reads the current chain head's this_hash, computes prev_hash from it,
+// computes this_hash via hashFn(prevHash), and inserts the event. The
+// caller must not pre-set e.PrevHash or e.ThisHash; both are overwritten.
+// Returns (true, nil) for a fresh insert, (false, nil) for a re-delivery.
+func (s *EventStore) InsertChained(_ context.Context, e *store.Event, hashFn func(prevHash []byte) []byte) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.events[e.ID]; ok {
+		return false, nil
+	}
+	var prevHash []byte
+	if len(s.ordered) > 0 {
+		prevHash = append([]byte(nil), s.ordered[len(s.ordered)-1].ThisHash...)
+	} else {
+		prevHash = make([]byte, 32)
+	}
+	e.PrevHash = append([]byte(nil), prevHash...)
+	e.ThisHash = append([]byte(nil), hashFn(prevHash)...)
 	c := *e
 	s.events[e.ID] = &c
 	s.ordered = append(s.ordered, &c)
